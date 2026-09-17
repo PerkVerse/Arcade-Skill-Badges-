@@ -1,4 +1,4 @@
-## GSP074 : Cloud Storage: Qwik Start - CLI/SDK
+## GSP080 : Cloud Storage: Qwik Start - CLI/SDK
 
 ```
 export REGION=
