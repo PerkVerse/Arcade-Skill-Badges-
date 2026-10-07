@@ -1,4 +1,4 @@
-## GSP329 : Use Machine Learning APIs on Google Cloud: Challenge Lab
+## ARC114 : Analyze Speech and Language with Google APIs: Challenge Lab
 
 ### ⚠️ Wait! Before You Copy The Code:
 **Did this 1-click script save your time and effort?** 
