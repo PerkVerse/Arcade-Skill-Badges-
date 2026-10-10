@@ -1,5 +1,4 @@
 ```
-export REGION=
 export ZONE=
 ```
 
