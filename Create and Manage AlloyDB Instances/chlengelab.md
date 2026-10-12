@@ -18,6 +18,7 @@ psql -h $ALLOYDB -U postgres
 ```
 Change3Me
 ```
+### Paste The Following Password
 
 ```
 CREATE TABLE regions (
