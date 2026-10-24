@@ -10,8 +10,8 @@
 # ---------- Colors ----------
 R=$'\e[31m'; G=$'\e[32m'; Y=$'\e[33m'; B=$'\e[34m'; C=$'\e[36m'; D=$'\e[2m'; W=$'\e[1m'; N=$'\e[0m'
 
-MAX_TRIES=${MAX_TRIES:-15}     # kitni baar retry karna hai (10-20 ke beech)
-SLEEP_SEC=${SLEEP_SEC:-5}      # har retry ke beech wait
+MAX_TRIES=${MAX_TRIES:-15}     # max retries per step (10-20 recommended)
+SLEEP_SEC=${SLEEP_SEC:-5}      # wait between retries
 LOG="/tmp/gcs_lab_$(date +%s).log"
 FAILED=()
 
@@ -40,7 +40,7 @@ run() {
     tail -n 1 "$LOG" | cut -c1-110 | sed "s/^/      ${D}/;s/$/${N}/"
     sleep "$SLEEP_SEC"; ((n++))
   done
-  err "$desc ${D}— $MAX_TRIES attempts ke baad bhi fail${N}"
+  err "$desc ${D}— $MAX_TRIES attempts, still failing${N}"
   FAILED+=("$desc"); return 1
 }
 
@@ -82,7 +82,7 @@ if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "(unset)" ]; then
   PROJECT_ID=$(gcloud projects list --format="value(projectId)" --limit=1 2>/dev/null)
 fi
 if [ -z "$PROJECT_ID" ]; then
-  err "Project ID detect nahi hua. Pehle console me login karke Cloud Shell kholo."
+  err "Could not detect Project ID. Log in to the lab console and open Cloud Shell first."
   exit 1
 fi
 gcloud config set project "$PROJECT_ID" >/dev/null 2>&1
@@ -90,7 +90,7 @@ ok "Project ID detected : ${W}$PROJECT_ID${N}"
 
 DEFAULT_REGION="us-east4"
 echo
-read -rp "  ${W}Region${N} enter karo ${D}[default: $DEFAULT_REGION]${N} : " REGION
+read -rp "  ${W}Region${N} enter ${D}[default: $DEFAULT_REGION]${N} : " REGION
 REGION="${REGION:-$DEFAULT_REGION}"
 
 gcloud config set compute/region "$REGION" >/dev/null 2>&1
@@ -174,7 +174,7 @@ KEY1=$(gen_key); ENC="$KEY1"
 ok "CSEK key #1 generated : ${D}${KEY1:0:12}…${N}"
 
 set_boto encryption_key "$KEY1" yes
-ok "encryption_key .boto me set"
+ok "encryption_key set in .boto"
 
 run "KMS default key remove" "gsutil kms encryption -d gs://$BUCKET_NAME_1" "true"
 run "Upload setup2.html (encrypted)" "GSK cp setup2.html gs://$BUCKET_NAME_1/"
@@ -201,7 +201,7 @@ KEY2=$(gen_key); ENC="$KEY2"
 set_boto encryption_key "$KEY2" yes
 ok "CSEK key #2 generated → encryption_key : ${D}${KEY2:0:12}…${N}"
 
-run "Rewrite key for setup2.html (setup3 jaanbujh ke skip)" \
+run "Rewrite key for setup2.html (setup3 intentionally skipped)" \
   "GSK rewrite -k gs://$BUCKET_NAME_1/setup2.html"
 
 set_boto decryption_key1 "$KEY1" no
@@ -212,9 +212,9 @@ run "Download setup2.html → recover2.html" \
   "GSK cp gs://$BUCKET_NAME_1/setup2.html recover2.html && [ -s recover2.html ]"
 
 if GSK cp gs://$BUCKET_NAME_1/setup3.html recover3.html >>"$LOG" 2>&1; then
-  warn "recover3.html download ho gaya (expected fail tha)"
+  warn "recover3.html downloaded (it was expected to fail)"
 else
-  ok "recover3.html FAIL hua — ${D}lab me yehi expected hai ✔${N}"
+  ok "recover3.html FAILED — ${D}this is expected in the lab ✔${N}"
 fi
 
 # ==========================================================================
@@ -274,7 +274,7 @@ run "Download oldest (original) version" \
   "gcloud storage cp '$VERSION_NAME' recovered.txt && [ -s recovered.txt ]" \
   "gsutil cp '$VERSION_NAME' recovered.txt"
 echo "      ${D}│ setup.html    : $(stat -c%s setup.html) bytes (current)${N}"
-echo "      ${D}│ recovered.txt : $(stat -c%s recovered.txt) bytes (original, bada hona chahiye)${N}"
+echo "      ${D}│ recovered.txt : $(stat -c%s recovered.txt) bytes (original, should be larger)${N}"
 
 # ==========================================================================
 section "TASK 7 │ Synchronize a directory to a bucket"
@@ -299,12 +299,12 @@ chk "firstlevel/secondlevel synced"         "gcloud storage ls -r gs://$BUCKET_N
 
 echo
 if [ ${#FAILED[@]} -eq 0 ]; then
-  echo "  ${G}${W}🎉 Saare steps successfully complete!${N}"
+  echo "  ${G}${W}🎉 All steps completed successfully!${N}"
 else
-  echo "  ${Y}${W}Ye steps fail hue:${N}"
+  echo "  ${Y}${W}These steps failed:${N}"
   for f in "${FAILED[@]}"; do echo "   ${R}•${N} $f"; done
-  echo "  ${D}Script dobara chalao: bash gcs_lab_autosolver.sh  |  Log: $LOG${N}"
+  echo "  ${D}Re-run the script: bash gcs_lab_autosolver.sh  |  Log: $LOG${N}"
 fi
 echo
-echo "  ${W}Ab console me jao aur har task ke neeche 'Check my progress' click karo.${N}"
+echo "  ${W}Now go to the lab page and click 'Check my progress' under each task.${N}"
 echo
