@@ -1,4 +1,4 @@
-## GSP329 : Use Machine Learning APIs on Google Cloud: Challenge Lab
+## GSP539 : Build Global and Regional Load Balancing Solutions: Challenge Lab
 
 ### ⚠️ Wait! Before You Copy The Code:
 **Did this 1-click script save your time and effort?** 
